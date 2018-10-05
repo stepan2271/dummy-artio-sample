@@ -1,0 +1,22 @@
+group 'dummy-artio-example'
+version '1.0-SNAPSHOT'
+
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'checkstyle'
+}

@@ -1,0 +1,9 @@
+dependencies {
+    compile project(':codecs')
+    compile project(':codecs').sourceSets.generated.output
+    compileClasspath files(new File(rootDir, 'lib/artio-core-0.16-SNAPSHOT.jar'))
+    compileClasspath files(new File(rootDir, 'lib/artio-codecs-0.16-SNAPSHOT.jar'))
+    compile "io.aeron:aeron-client:1.10.4"
+    compile "io.aeron:aeron-driver:1.10.4"
+    compile "io.aeron:aeron-samples:1.10.4"
+}

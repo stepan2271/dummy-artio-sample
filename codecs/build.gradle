@@ -1,0 +1,35 @@
+group 'dummy-artio-example'
+
+project(':codecs') {
+    dependencies {
+        compile files(new File(rootDir, 'lib/artio-core-0.16-SNAPSHOT.jar'))
+        compile files(new File(rootDir, 'lib/artio-codecs-0.16-SNAPSHOT.jar'))
+        compile "org.agrona:agrona:0.9.22"
+        compile "uk.co.real-logic:sbe-tool:1.8.6"
+    }
+
+    def generatedDir = file("$buildDir/generated-src")
+
+    sourceSets {
+        generated.java.srcDir generatedDir
+    }
+
+    // Code Generation Configuration
+    compileGeneratedJava.dependsOn 'generateCodecs'
+    compileGeneratedJava.classpath += sourceSets.main.runtimeClasspath
+
+    task(generateCodecs, type: JavaExec) {
+        main = 'uk.co.real_logic.artio.dictionary.CodecGenerationTool'
+        classpath = sourceSets.main.runtimeClasspath
+        args = [generatedDir, 'src/main/resources/session_dictionary.xml']
+        outputs.dir generatedDir
+    }
+
+    jar {
+        from(sourceSets.generated.output) {
+            include '**/*.class'
+        }
+    }
+
+    jar.dependsOn compileGeneratedJava
+}
