@@ -38,12 +38,12 @@ public class SamplePingPong
         final boolean startedTaker = taker.start();
         assert startedTaker;
         final ExampleMessageEncoder exampleMessageEncoder = new ExampleMessageEncoder();
-        exampleMessageEncoder.testReqID("safdsbgfgewfvjherdsagewaf".toCharArray());
+        exampleMessageEncoder.testReqID("saf".toCharArray());
         Thread.sleep(100);
         for (int i = 0; i < 2_000_000; i++)
         {
             maker.session.send(exampleMessageEncoder);
-            Thread.sleep(100);
+            Thread.sleep(20);
         }
     }
 }

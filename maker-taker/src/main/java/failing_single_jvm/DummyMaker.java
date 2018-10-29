@@ -97,7 +97,7 @@ public class DummyMaker
     @Override
     public void onExampleMessage(final ExampleMessageDecoder decoder)
     {
-
+//        System.out.println(decoder);
     }
 
     @Override

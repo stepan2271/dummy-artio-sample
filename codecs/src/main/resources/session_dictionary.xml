@@ -28,6 +28,7 @@
         </message>
         <message name="ExampleMessage" msgtype="B" msgcat="app">
             <field name="TestReqID" required="Y"/>
+            <field name="TestReqID2" required="N"/>
         </message>
         <message name="ResendRequest" msgtype="2" msgcat="admin">
             <field name="BeginSeqNo" required="Y"/>
@@ -86,6 +87,7 @@
         <field number="122" name="OrigSendingTime" type="UTCTIMESTAMP"/>
         <field number="369" name="LastMsgSeqNumProcessed" type="SEQNUM"/>
         <field number="112" name="TestReqID" type="STRING"/>
+        <field number="113" name="TestReqID2" type="STRING"/>
         <field number="7" name="BeginSeqNo" type="SEQNUM"/>
         <field number="16" name="EndSeqNo" type="SEQNUM"/>
         <field number="45" name="RefSeqNum" type="SEQNUM"/>

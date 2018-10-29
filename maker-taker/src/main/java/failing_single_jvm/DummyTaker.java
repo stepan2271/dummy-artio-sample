@@ -3,6 +3,7 @@ package failing_single_jvm;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.SleepingIdleStrategy;
 import uk.co.real_logic.artio.Reply;
+import uk.co.real_logic.artio.builder.ExampleMessageEncoder;
 import uk.co.real_logic.artio.decoder.*;
 import uk.co.real_logic.artio.library.FixLibrary;
 import uk.co.real_logic.artio.library.LibraryConfiguration;
@@ -14,66 +15,61 @@ import java.util.function.BooleanSupplier;
 
 import static java.util.Collections.singletonList;
 
-public class DummyTaker implements DictionaryAcceptor
-{
+public class DummyTaker implements DictionaryAcceptor {
+    private Session session;
     private BooleanSupplier startLambda;
     private FixLibrary library;
+    final ExampleMessageEncoder exampleMessageEncoder;
 
-    public DummyTaker(final SessionConfiguration sessionConfig)
-    {
+    public DummyTaker(final SessionConfiguration sessionConfig) {
         startLambda = () ->
         {
             final SessionAcquireHandler sessionAcquireHandler =
                     (session1, isSlow) -> new MessageHandler(this);
             library =
-                DummyUtils.blockingConnect(
-                    new LibraryConfiguration()
-                    .sessionAcquireHandler(sessionAcquireHandler)
-                    .libraryAeronChannels(singletonList(DummyUtils.buildChannelString(11111))));
+                    DummyUtils.blockingConnect(
+                            new LibraryConfiguration()
+                                    .sessionAcquireHandler(sessionAcquireHandler)
+                                    .libraryAeronChannels(singletonList(DummyUtils.buildChannelString(11111))));
             final IdleStrategy idleStrategy = new SleepingIdleStrategy(1);
             final Reply<Session> reply = library.initiate(sessionConfig);
-            while (reply.isExecuting())
-            {
+            while (reply.isExecuting()) {
                 idleStrategy.idle(library.poll(1));
             }
-            if (!reply.hasCompleted())
-            {
+            if (!reply.hasCompleted()) {
                 System.out.println("unable to initiate the session");
                 library.close();
                 return false;
             }
+            session = reply.resultIfPresent();
             System.out.println("Replied with: " + reply.state());
             new Thread(this::run).start();
             return true;
         };
+        exampleMessageEncoder = new ExampleMessageEncoder();
+        exampleMessageEncoder.testReqID("11111111111111safsafsafdsagfaf1333333333333".toCharArray());
+        exampleMessageEncoder.testReqID2("sdsafdgdafsagfjsafsagfafwadahjdhgjajhfhjhjwaf".toCharArray());
     }
 
-    private void run()
-    {
-        try
-        {
+    private void run() {
+        try {
             Thread.sleep(100);
-        }
-        catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
         final SleepingIdleStrategy sleepingIdleStrategy = new SleepingIdleStrategy(10);
-        while (true)
-        {
+        while (true) {
             sleepingIdleStrategy.idle((tryRead() ? 1 : 0));
         }
     }
-    public boolean tryRead()
-    {
+
+    public boolean tryRead() {
         int counter = 0;
         int fragmentsRead;
-        do
-        {
+        do {
             fragmentsRead = library.poll(10);
             counter++;
-            if ((counter & DummyUtils.COUNTER_MASK) == 0)
-            {
+            if ((counter & DummyUtils.COUNTER_MASK) == 0) {
                 System.out.println("Taker too many messages in tryRead !!!!!");
             }
         }
@@ -81,21 +77,19 @@ public class DummyTaker implements DictionaryAcceptor
         return true;
     }
 
-    public boolean start()
-    {
+    public boolean start() {
         return startLambda.getAsBoolean();
     }
 
     @Override
-    public void onLogon(final LogonDecoder decoder)
-    {
+    public void onLogon(final LogonDecoder decoder) {
 
     }
 
     @Override
-    public void onExampleMessage(final ExampleMessageDecoder decoder)
-    {
-        System.out.println(decoder);
+    public void onExampleMessage(final ExampleMessageDecoder decoder) {
+//        System.out.println("******" + decoder);
+        session.send(exampleMessageEncoder);
     }
 
     @Override
@@ -114,8 +108,7 @@ public class DummyTaker implements DictionaryAcceptor
     }
 
     @Override
-    public void onHeartbeat(final HeartbeatDecoder decoder)
-    {
+    public void onHeartbeat(final HeartbeatDecoder decoder) {
 
     }
 
@@ -125,8 +118,7 @@ public class DummyTaker implements DictionaryAcceptor
     }
 
     @Override
-    public void onLogout(final LogoutDecoder decoder)
-    {
+    public void onLogout(final LogoutDecoder decoder) {
 
     }
 }
