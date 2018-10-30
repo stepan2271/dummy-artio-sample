@@ -27,12 +27,8 @@ public class SamplePingPong
             .senderCompId("TAKER")
             .resetSeqNum(DummyUtils.NTPRO_RESET_SEQ_NUM)
             .build();
-        final DummyTaker taker = new DummyTaker(
-            sessionConfiguration
-        );
-        final DummyMaker maker = new DummyMaker(
-            "INITIATOR",
-            "ACCEPTOR");
+        final DummyTaker taker = new DummyTaker(sessionConfiguration);
+        final DummyMaker maker = new DummyMaker("INITIATOR", "ACCEPTOR");
         final boolean makerStarted = maker.start();
         assert makerStarted;
         final boolean startedTaker = taker.start();
@@ -42,8 +38,11 @@ public class SamplePingPong
         Thread.sleep(100);
         for (int i = 0; i < 2_000_000; i++)
         {
-            maker.session.send(exampleMessageEncoder);
-            Thread.sleep(20);
+            if (maker.session.isActive())
+            {
+                maker.session.send(exampleMessageEncoder);
+            }
+            Thread.sleep(1);
         }
     }
 }

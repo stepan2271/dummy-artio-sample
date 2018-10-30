@@ -47,8 +47,7 @@ public class DummyTaker implements DictionaryAcceptor {
             return true;
         };
         exampleMessageEncoder = new ExampleMessageEncoder();
-        exampleMessageEncoder.testReqID("11111111111111safsafsafdsagfaf1333333333333".toCharArray());
-        exampleMessageEncoder.testReqID2("sdsafdgdafsagfjsafsagfafwadahjdhgjajhfhjhjwaf".toCharArray());
+        exampleMessageEncoder.testReqID("saf".toCharArray());
     }
 
     private void run() {
