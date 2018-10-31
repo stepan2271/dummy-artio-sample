@@ -6,10 +6,8 @@ import uk.co.real_logic.artio.engine.EngineConfiguration;
 import uk.co.real_logic.artio.engine.FixEngine;
 import uk.co.real_logic.artio.library.SessionConfiguration;
 
-public class SamplePingPong
-{
-    public static void main(final String[] args) throws InterruptedException
-    {
+public class SamplePingPong {
+    public static void main(final String[] args) throws InterruptedException {
         final MediaDriver driver = DummyUtils.startDefaultMediaDriver();
         final int portToLibraryTaker = 11111;
         final int portToLibraryMaker = 11113;
@@ -34,15 +32,12 @@ public class SamplePingPong
         final boolean startedTaker = taker.start();
         assert startedTaker;
         final ExampleMessageEncoder exampleMessageEncoder = new ExampleMessageEncoder();
-        exampleMessageEncoder.testReqID("saf".toCharArray());
+        exampleMessageEncoder.testReqID("sasafsafdsafsfwafdsadwadsafwadwadwadf".toCharArray());
         Thread.sleep(100);
-        for (int i = 0; i < 2_000_000; i++)
-        {
-            if (maker.session.isActive())
-            {
-                maker.session.send(exampleMessageEncoder);
+        for (int i = 0; i < 2_000_000; i++) {
+            if (maker.session.isActive() && taker.session.isActive()) {
+                maker.trySendMessage();
             }
-            Thread.sleep(1);
         }
     }
 }

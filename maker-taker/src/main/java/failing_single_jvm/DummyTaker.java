@@ -16,10 +16,10 @@ import java.util.function.BooleanSupplier;
 import static java.util.Collections.singletonList;
 
 public class DummyTaker implements DictionaryAcceptor {
-    private Session session;
+    public Session session;
     private BooleanSupplier startLambda;
     private FixLibrary library;
-    final ExampleMessageEncoder exampleMessageEncoder;
+    private final ExampleMessageEncoder exampleMessageEncoder;
 
     public DummyTaker(final SessionConfiguration sessionConfig) {
         startLambda = () ->
@@ -47,7 +47,7 @@ public class DummyTaker implements DictionaryAcceptor {
             return true;
         };
         exampleMessageEncoder = new ExampleMessageEncoder();
-        exampleMessageEncoder.testReqID("saf".toCharArray());
+        exampleMessageEncoder.testReqID("11144325435325325423321525236324321534".toCharArray());
     }
 
     private void run() {
@@ -87,7 +87,6 @@ public class DummyTaker implements DictionaryAcceptor {
 
     @Override
     public void onExampleMessage(final ExampleMessageDecoder decoder) {
-//        System.out.println("******" + decoder);
         session.send(exampleMessageEncoder);
     }
 

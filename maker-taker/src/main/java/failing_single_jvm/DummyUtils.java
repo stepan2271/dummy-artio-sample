@@ -5,6 +5,7 @@ import org.agrona.IoUtil;
 import uk.co.real_logic.artio.builder.LogonEncoder;
 import uk.co.real_logic.artio.builder.LogoutEncoder;
 import uk.co.real_logic.artio.engine.EngineConfiguration;
+import uk.co.real_logic.artio.engine.LowResourceEngineScheduler;
 import uk.co.real_logic.artio.library.FixLibrary;
 import uk.co.real_logic.artio.library.LibraryConfiguration;
 import uk.co.real_logic.artio.session.SessionCustomisationStrategy;
@@ -17,19 +18,6 @@ public class DummyUtils
 {
     public static final boolean NTPRO_RESET_SEQ_NUM = true;
     static final int COUNTER_MASK = ((pow2(20)) - 1);
-    public static final SessionCustomisationStrategy NORMAL_LOGON_STRATEGY = new SessionCustomisationStrategy()
-    {
-        @Override
-        public void configureLogon(final LogonEncoder logonEncoder, final long l)
-        {
-            logonEncoder.resetResetSeqNumFlag();
-        }
-
-        @Override
-        public void configureLogout(final LogoutEncoder logoutEncoder, final long l)
-        {
-        }
-    };
 
     public static FixLibrary blockingConnect(final LibraryConfiguration configuration)
     {
@@ -56,7 +44,7 @@ public class DummyUtils
     {
         final MediaDriver.Context context = new MediaDriver.Context()
             .threadingMode(SHARED)
-            .publicationTermBufferLength(65536)
+            .publicationTermBufferLength(4194304)
             .dirDeleteOnStart(true);
         return MediaDriver.launch(context);
     }
@@ -68,6 +56,8 @@ public class DummyUtils
 
     public static EngineConfiguration getConfiguration(final int port)
     {
-        return new EngineConfiguration().libraryAeronChannel(DummyUtils.buildChannelString(port));
+        return new EngineConfiguration()
+                .libraryAeronChannel(DummyUtils.buildChannelString(port))
+                .scheduler(new LowResourceEngineScheduler());
     }
 }

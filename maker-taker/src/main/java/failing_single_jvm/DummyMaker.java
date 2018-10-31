@@ -1,6 +1,7 @@
 package failing_single_jvm;
 
 import org.agrona.concurrent.SleepingIdleStrategy;
+import uk.co.real_logic.artio.builder.ExampleMessageEncoder;
 import uk.co.real_logic.artio.decoder.*;
 import uk.co.real_logic.artio.library.AcquiringSessionExistsHandler;
 import uk.co.real_logic.artio.library.FixLibrary;
@@ -17,14 +18,32 @@ import java.util.function.BooleanSupplier;
 import static java.util.Collections.singletonList;
 
 public class DummyMaker
-    implements DictionaryAcceptor
-{
+        implements DictionaryAcceptor {
     private BooleanSupplier startLambda;
     public Session session;
     private FixLibrary library;
+    private int numberOfResponsesWeWait = 0;
+    private boolean isBlocked = false;
+    private final ExampleMessageEncoder exampleMessageEncoder;
 
-    public DummyMaker(final String initiatorCompId, final String acceptorCompId)
-    {
+    public synchronized void trySendMessage() {
+        if (isBlocked) {
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+        session.send(exampleMessageEncoder);
+        numberOfResponsesWeWait++;
+        if (numberOfResponsesWeWait == 5)
+        {
+            isBlocked = true;
+        }
+    }
+
+    public DummyMaker(final String initiatorCompId, final String acceptorCompId) {
         startLambda = () ->
         {
             final SessionAcquireHandler sessionAcquireHandler = (session, isSlow) ->
@@ -34,48 +53,42 @@ public class DummyMaker
                 return new MessageHandler(this);
             };
             final MessageValidationStrategy validationStrategy = MessageValidationStrategy.targetCompId(acceptorCompId)
-                .and(MessageValidationStrategy.senderCompId(Collections.singletonList(initiatorCompId)));
+                    .and(MessageValidationStrategy.senderCompId(Collections.singletonList(initiatorCompId)));
             final AuthenticationStrategy authenticationStrategy = AuthenticationStrategy.of(validationStrategy);
             LibraryConfiguration libraryConfiguration =
-                (LibraryConfiguration)new LibraryConfiguration()
-                    .sessionExistsHandler(new AcquiringSessionExistsHandler())
-                    .sessionAcquireHandler(sessionAcquireHandler)
-                    .libraryAeronChannels(singletonList(DummyUtils.buildChannelString(11113)))
-                    .sessionIdStrategy(SessionIdStrategy.senderAndTarget())
-                    .authenticationStrategy(authenticationStrategy);
+                    (LibraryConfiguration) new LibraryConfiguration()
+                            .sessionExistsHandler(new AcquiringSessionExistsHandler())
+                            .sessionAcquireHandler(sessionAcquireHandler)
+                            .libraryAeronChannels(singletonList(DummyUtils.buildChannelString(11113)))
+                            .sessionIdStrategy(SessionIdStrategy.senderAndTarget())
+                            .authenticationStrategy(authenticationStrategy);
             library = DummyUtils.blockingConnect(libraryConfiguration);
             new Thread(this::run).start();
             return true;
         };
+        exampleMessageEncoder = new ExampleMessageEncoder();
+        exampleMessageEncoder.testReqID("sasafsafdsafsfwafdsadwadsafwadwadwadf".toCharArray());
     }
 
-    private void run()
-    {
-        try
-        {
+    private void run() {
+        try {
             Thread.sleep(100);
-        }
-        catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
         final SleepingIdleStrategy sleepingIdleStrategy = new SleepingIdleStrategy(10);
-        while (true)
-        {
+        while (true) {
             sleepingIdleStrategy.idle((tryRead() ? 1 : 0));
         }
     }
 
-    public boolean tryRead()
-    {
+    public boolean tryRead() {
         int counter = 0;
         int fragmentsRead;
-        do
-        {
+        do {
             fragmentsRead = library.poll(10);
             counter++;
-            if ((counter & DummyUtils.COUNTER_MASK) == 0)
-            {
+            if ((counter & DummyUtils.COUNTER_MASK) == 0) {
                 System.out.println("Maker too many messages in tryRead !!!!!");
             }
         }
@@ -83,21 +96,22 @@ public class DummyMaker
         return true;
     }
 
-    public boolean start()
-    {
+    public boolean start() {
         return startLambda.getAsBoolean();
     }
 
     @Override
-    public void onLogon(final LogonDecoder decoder)
-    {
+    public void onLogon(final LogonDecoder decoder) {
 
     }
 
     @Override
-    public void onExampleMessage(final ExampleMessageDecoder decoder)
-    {
-//        System.out.println(decoder);
+    public synchronized void onExampleMessage(final ExampleMessageDecoder decoder) {
+        numberOfResponsesWeWait--;
+        if (numberOfResponsesWeWait == 0)
+        {
+            isBlocked = false;
+        }
     }
 
     @Override
@@ -116,8 +130,7 @@ public class DummyMaker
     }
 
     @Override
-    public void onHeartbeat(final HeartbeatDecoder decoder)
-    {
+    public void onHeartbeat(final HeartbeatDecoder decoder) {
 
     }
 
@@ -127,8 +140,7 @@ public class DummyMaker
     }
 
     @Override
-    public void onLogout(final LogoutDecoder decoder)
-    {
+    public void onLogout(final LogoutDecoder decoder) {
 
     }
 }
