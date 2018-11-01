@@ -1,5 +1,6 @@
 package failing_single_jvm;
 
+import org.agrona.concurrent.BusySpinIdleStrategy;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.SleepingIdleStrategy;
 import uk.co.real_logic.artio.Reply;
@@ -56,9 +57,9 @@ public class DummyTaker implements DictionaryAcceptor {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        final SleepingIdleStrategy sleepingIdleStrategy = new SleepingIdleStrategy(10);
+        final IdleStrategy idleStrategy = new BusySpinIdleStrategy();
         while (true) {
-            sleepingIdleStrategy.idle((tryRead() ? 1 : 0));
+            idleStrategy.idle((tryRead() ? 1 : 0));
         }
     }
 

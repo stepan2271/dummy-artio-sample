@@ -1,6 +1,7 @@
 package failing_single_jvm;
 
-import org.agrona.concurrent.SleepingIdleStrategy;
+import org.agrona.concurrent.BusySpinIdleStrategy;
+import org.agrona.concurrent.IdleStrategy;
 import uk.co.real_logic.artio.builder.ExampleMessageEncoder;
 import uk.co.real_logic.artio.decoder.*;
 import uk.co.real_logic.artio.library.AcquiringSessionExistsHandler;
@@ -37,8 +38,7 @@ public class DummyMaker
         }
         session.send(exampleMessageEncoder);
         numberOfResponsesWeWait++;
-        if (numberOfResponsesWeWait == 5)
-        {
+        if (numberOfResponsesWeWait == 5) {
             isBlocked = true;
         }
     }
@@ -76,9 +76,9 @@ public class DummyMaker
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        final SleepingIdleStrategy sleepingIdleStrategy = new SleepingIdleStrategy(10);
+        final IdleStrategy idleStrategy = new BusySpinIdleStrategy();
         while (true) {
-            sleepingIdleStrategy.idle((tryRead() ? 1 : 0));
+            idleStrategy.idle((tryRead() ? 1 : 0));
         }
     }
 
