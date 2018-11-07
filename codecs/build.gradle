@@ -4,8 +4,8 @@ project(':codecs') {
     dependencies {
         compile files(new File(rootDir, 'lib/artio-core-0.16-SNAPSHOT.jar'))
         compile files(new File(rootDir, 'lib/artio-codecs-0.16-SNAPSHOT.jar'))
-        compile "org.agrona:agrona:0.9.22"
-        compile "uk.co.real-logic:sbe-tool:1.8.6"
+        compile "org.agrona:agrona:0.9.26"
+        compile "uk.co.real-logic:sbe-tool:1.9.0"
     }
 
     def generatedDir = file("$buildDir/generated-src")
