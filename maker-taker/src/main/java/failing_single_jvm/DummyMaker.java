@@ -27,6 +27,7 @@ public class DummyMaker
     private boolean isBlocked = false;
     private final ExampleMessageEncoder exampleMessageEncoder;
 
+    private String randomReqId = "";
     public synchronized void trySendMessage() {
         if (isBlocked) {
             try {
@@ -36,6 +37,8 @@ public class DummyMaker
             }
             return;
         }
+        randomReqId = System.currentTimeMillis() + (randomReqId.length() > 200 ? "" : randomReqId);
+        exampleMessageEncoder.testReqID(randomReqId.toCharArray());
         session.send(exampleMessageEncoder);
         numberOfResponsesWeWait++;
         if (numberOfResponsesWeWait == 5) {
@@ -67,7 +70,6 @@ public class DummyMaker
             return true;
         };
         exampleMessageEncoder = new ExampleMessageEncoder();
-        exampleMessageEncoder.testReqID("sasafsafdsafsfwafdsadwadsafwadwadwadf".toCharArray());
     }
 
     private void run() {
