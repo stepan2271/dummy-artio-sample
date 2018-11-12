@@ -1,9 +1,21 @@
+def aeronVersion = '1.11.3'
+
 dependencies {
     compile project(':codecs')
     compile project(':codecs').sourceSets.generated.output
     compileClasspath files(new File(rootDir, 'lib/artio-core-0.16-SNAPSHOT.jar'))
     compileClasspath files(new File(rootDir, 'lib/artio-codecs-0.16-SNAPSHOT.jar'))
-    compile "io.aeron:aeron-client:1.11.3"
-    compile "io.aeron:aeron-driver:1.11.3"
-    compile "io.aeron:aeron-samples:1.11.3"
+
+    compileClasspath files(new File(rootDir, 'lib/aeron-archive-1.11.4-SNAPSHOT.jar'))
+    compileClasspath files(new File(rootDir, 'lib/aeron-client-1.11.4-SNAPSHOT.jar'))
+    compileClasspath files(new File(rootDir, 'lib/aeron-driver-1.11.4-SNAPSHOT.jar'))
+    compileClasspath files(new File(rootDir, 'lib/aeron-samples-1.11.4-SNAPSHOT.jar'))
+    compile 'org.hdrhistogram:HdrHistogram:2.1.10'
+    compile "net.bytebuddy:byte-buddy:1.9.0"
+
+/*
+    compile "io.aeron:aeron-client:${aeronVersion}"
+    compile "io.aeron:aeron-driver:${aeronVersion}"
+    compile "io.aeron:aeron-samples:${aeronVersion}"
+*/
 }

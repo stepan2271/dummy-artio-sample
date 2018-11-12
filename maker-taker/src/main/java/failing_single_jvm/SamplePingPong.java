@@ -37,6 +37,7 @@ public class SamplePingPong {
         for (int i = 0; i < 2_000_000; i++) {
             if (maker.session.isActive() && taker.session.isActive()) {
                 maker.trySendMessage();
+                if(i % 1000 == 0) System.out.println(i);
             }
         }
     }

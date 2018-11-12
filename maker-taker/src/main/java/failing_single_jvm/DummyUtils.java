@@ -57,6 +57,8 @@ public class DummyUtils
     public static EngineConfiguration getConfiguration(final int port)
     {
         return new EngineConfiguration()
+                .logOutboundMessages(false)
+                .logInboundMessages(false)
                 .libraryAeronChannel(DummyUtils.buildChannelString(port))
                 .scheduler(new LowResourceEngineScheduler());
     }
