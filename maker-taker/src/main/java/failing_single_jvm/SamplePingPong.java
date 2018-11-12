@@ -31,10 +31,13 @@ public class SamplePingPong {
         assert makerStarted;
         final boolean startedTaker = taker.start();
         assert startedTaker;
+        String randomReqId = "";
         final ExampleMessageEncoder exampleMessageEncoder = new ExampleMessageEncoder();
-        exampleMessageEncoder.testReqID("sasafsafdsafsfwafdsadwadsafwadwadwadf".toCharArray());
         Thread.sleep(100);
-        for (int i = 0; i < 2_000_000; i++) {
+        for (int i = 0; i < 2_000_000; i++)
+        {
+            randomReqId = System.currentTimeMillis() + (randomReqId.length() > 200 ? "" : randomReqId);
+            exampleMessageEncoder.testReqID(randomReqId.toCharArray());
             if (maker.session.isActive() && taker.session.isActive()) {
                 maker.trySendMessage();
                 if(i % 1000 == 0) System.out.println(i);
