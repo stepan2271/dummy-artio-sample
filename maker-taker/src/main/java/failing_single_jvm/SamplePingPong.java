@@ -6,6 +6,8 @@ import uk.co.real_logic.artio.engine.EngineConfiguration;
 import uk.co.real_logic.artio.engine.FixEngine;
 import uk.co.real_logic.artio.library.SessionConfiguration;
 
+import java.util.concurrent.locks.LockSupport;
+
 public class SamplePingPong {
     public static void main(final String[] args) throws InterruptedException {
         final MediaDriver driver = DummyUtils.startDefaultMediaDriver();
@@ -34,14 +36,20 @@ public class SamplePingPong {
         String randomReqId = "";
         final ExampleMessageEncoder exampleMessageEncoder = new ExampleMessageEncoder();
         Thread.sleep(100);
-        for (int i = 0; i < 2_000_000; i++)
+        for (int i = 0; i < 10_000_000; i++)
         {
             randomReqId = System.currentTimeMillis() + (randomReqId.length() > 200 ? "" : randomReqId);
             exampleMessageEncoder.testReqID(randomReqId.toCharArray());
             if (maker.session.isActive() && taker.session.isActive()) {
-                maker.trySendMessage();
+                final boolean isSent = maker.trySendMessage();
+                if (!isSent)
+                {
+                    LockSupport.parkNanos(10_000);
+                }
                 if(i % 1000 == 0) System.out.println(i);
             }
         }
+        System.out.println("!!!! SUCCESS !!!!");
+        System.exit(0);
     }
 }

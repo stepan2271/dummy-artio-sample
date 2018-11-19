@@ -20,6 +20,7 @@ import static java.util.Collections.singletonList;
 
 public class DummyMaker
         implements DictionaryAcceptor {
+    private static final int MAX_NUMBER_OF_MESSAGES_IN_QUEUE = 50;
     private BooleanSupplier startLambda;
     public Session session;
     private FixLibrary library;
@@ -28,22 +29,18 @@ public class DummyMaker
     private final ExampleMessageEncoder exampleMessageEncoder;
 
     private String randomReqId = "";
-    public synchronized void trySendMessage() {
+    public synchronized boolean trySendMessage() {
         if (isBlocked) {
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            return;
+            return false;
         }
-        randomReqId = System.currentTimeMillis() + (randomReqId.length() > 200 ? "" : randomReqId);
+        randomReqId = String.valueOf(System.currentTimeMillis());
         exampleMessageEncoder.testReqID(randomReqId.toCharArray());
         session.send(exampleMessageEncoder);
         numberOfResponsesWeWait++;
-        if (numberOfResponsesWeWait == 5) {
+        if (numberOfResponsesWeWait == MAX_NUMBER_OF_MESSAGES_IN_QUEUE) {
             isBlocked = true;
         }
+        return true;
     }
 
     public DummyMaker(final String initiatorCompId, final String acceptorCompId) {
