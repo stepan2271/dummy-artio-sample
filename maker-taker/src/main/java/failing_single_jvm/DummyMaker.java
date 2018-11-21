@@ -19,78 +19,77 @@ import java.util.function.BooleanSupplier;
 import static java.util.Collections.singletonList;
 
 public class DummyMaker
-        implements DictionaryAcceptor {
+    implements DictionaryAcceptor
+{
     private BooleanSupplier startLambda;
-    public Session session;
+    private Session session;
     private FixLibrary library;
     private int numberOfResponsesWeWait = 0;
     private boolean isBlocked = false;
     private final ExampleMessageEncoder exampleMessageEncoder;
+    private final String initiatorCompId;
+    private final String acceptorCompId;
 
     private String randomReqId = "";
-    public synchronized void trySendMessage() {
-        if (isBlocked) {
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            return;
-        }
-        randomReqId = System.currentTimeMillis() + (randomReqId.length() > 200 ? "" : randomReqId);
-        exampleMessageEncoder.testReqID(randomReqId.toCharArray());
-        session.send(exampleMessageEncoder);
-        numberOfResponsesWeWait++;
-        if (numberOfResponsesWeWait == 5) {
-            isBlocked = true;
-        }
-    }
 
-    public DummyMaker(final String initiatorCompId, final String acceptorCompId) {
+    DummyMaker(final String initiatorCompId, final String acceptorCompId)
+    {
+        this.initiatorCompId = initiatorCompId;
+        this.acceptorCompId = acceptorCompId;
         startLambda = () ->
         {
-            final SessionAcquireHandler sessionAcquireHandler = (session, isSlow) ->
-            {
-                System.out.println("Session acceptor started");
-                this.session = session;
-                return new MessageHandler(this);
-            };
-            final MessageValidationStrategy validationStrategy = MessageValidationStrategy.targetCompId(acceptorCompId)
-                    .and(MessageValidationStrategy.senderCompId(Collections.singletonList(initiatorCompId)));
-            final AuthenticationStrategy authenticationStrategy = AuthenticationStrategy.of(validationStrategy);
-            LibraryConfiguration libraryConfiguration =
-                    (LibraryConfiguration) new LibraryConfiguration()
-                            .sessionExistsHandler(new AcquiringSessionExistsHandler())
-                            .sessionAcquireHandler(sessionAcquireHandler)
-                            .libraryAeronChannels(singletonList(DummyUtils.buildChannelString(11113)))
-                            .sessionIdStrategy(SessionIdStrategy.senderAndTarget())
-                            .authenticationStrategy(authenticationStrategy);
-            library = DummyUtils.blockingConnect(libraryConfiguration);
             new Thread(this::run).start();
             return true;
         };
         exampleMessageEncoder = new ExampleMessageEncoder();
     }
 
-    private void run() {
-        try {
+    private void run()
+    {
+        final SessionAcquireHandler sessionAcquireHandler = (session, isSlow) ->
+        {
+            System.out.println("Session acceptor started");
+            this.session = session;
+            return new MessageHandler(this);
+        };
+        final MessageValidationStrategy validationStrategy = MessageValidationStrategy.targetCompId(acceptorCompId)
+            .and(MessageValidationStrategy.senderCompId(Collections.singletonList(initiatorCompId)));
+        final AuthenticationStrategy authenticationStrategy = AuthenticationStrategy.of(validationStrategy);
+        LibraryConfiguration libraryConfiguration =
+            (LibraryConfiguration) new LibraryConfiguration()
+                .sessionExistsHandler(new AcquiringSessionExistsHandler())
+                .sessionAcquireHandler(sessionAcquireHandler)
+                .libraryAeronChannels(singletonList(DummyUtils.buildChannelString(11113)))
+                .sessionIdStrategy(SessionIdStrategy.senderAndTarget())
+                .authenticationStrategy(authenticationStrategy);
+        library = DummyUtils.blockingConnect(libraryConfiguration);
+
+        try
+        {
             Thread.sleep(100);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e)
+        {
             e.printStackTrace();
         }
         final IdleStrategy idleStrategy = new BusySpinIdleStrategy();
-        while (true) {
-            idleStrategy.idle((tryRead() ? 1 : 0));
+
+        while (true)
+        {
+            idleStrategy.idle(tryRead() ? 1 : 0);
+            idleStrategy.idle(trySendMessage() ? 1 : 0);
         }
     }
 
-    public boolean tryRead() {
+    private boolean tryRead()
+    {
         int counter = 0;
         int fragmentsRead;
-        do {
+        do
+        {
             fragmentsRead = library.poll(10);
             counter++;
-            if ((counter & DummyUtils.COUNTER_MASK) == 0) {
+            if ((counter & DummyUtils.COUNTER_MASK) == 0)
+            {
                 System.out.println("Maker too many messages in tryRead !!!!!");
             }
         }
@@ -98,17 +97,51 @@ public class DummyMaker
         return true;
     }
 
-    public boolean start() {
+    private int sentMessages = 0;
+
+    private boolean trySendMessage()
+    {
+        if (isBlocked || session == null)
+        {
+            try
+            {
+                Thread.sleep(1);
+            } catch (InterruptedException e)
+            {
+                e.printStackTrace();
+            }
+            return false;
+        }
+        randomReqId = System.currentTimeMillis() + (randomReqId.length() > 200 ? "" : randomReqId);
+        exampleMessageEncoder.testReqID(randomReqId.toCharArray());
+        session.send(exampleMessageEncoder);
+        sentMessages++;
+        numberOfResponsesWeWait++;
+        if (numberOfResponsesWeWait == 5)
+        {
+            isBlocked = true;
+        }
+        if (sentMessages % 1000 == 0)
+        {
+            System.out.println(sentMessages);
+        }
+        return true;
+    }
+
+    public boolean start()
+    {
         return startLambda.getAsBoolean();
     }
 
     @Override
-    public void onLogon(final LogonDecoder decoder) {
+    public void onLogon(final LogonDecoder decoder)
+    {
 
     }
 
     @Override
-    public synchronized void onExampleMessage(final ExampleMessageDecoder decoder) {
+    public void onExampleMessage(final ExampleMessageDecoder decoder)
+    {
         numberOfResponsesWeWait--;
         if (numberOfResponsesWeWait == 0)
         {
@@ -117,32 +150,38 @@ public class DummyMaker
     }
 
     @Override
-    public void onResendRequest(ResendRequestDecoder decoder) {
+    public void onResendRequest(ResendRequestDecoder decoder)
+    {
 
     }
 
     @Override
-    public void onReject(RejectDecoder decoder) {
+    public void onReject(RejectDecoder decoder)
+    {
 
     }
 
     @Override
-    public void onSequenceReset(SequenceResetDecoder decoder) {
+    public void onSequenceReset(SequenceResetDecoder decoder)
+    {
 
     }
 
     @Override
-    public void onHeartbeat(final HeartbeatDecoder decoder) {
+    public void onHeartbeat(final HeartbeatDecoder decoder)
+    {
 
     }
 
     @Override
-    public void onTestRequest(TestRequestDecoder decoder) {
+    public void onTestRequest(TestRequestDecoder decoder)
+    {
 
     }
 
     @Override
-    public void onLogout(final LogoutDecoder decoder) {
+    public void onLogout(final LogoutDecoder decoder)
+    {
 
     }
 }

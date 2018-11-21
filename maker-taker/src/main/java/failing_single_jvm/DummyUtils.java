@@ -2,13 +2,10 @@ package failing_single_jvm;
 
 import io.aeron.driver.MediaDriver;
 import org.agrona.IoUtil;
-import uk.co.real_logic.artio.builder.LogonEncoder;
-import uk.co.real_logic.artio.builder.LogoutEncoder;
 import uk.co.real_logic.artio.engine.EngineConfiguration;
 import uk.co.real_logic.artio.engine.LowResourceEngineScheduler;
 import uk.co.real_logic.artio.library.FixLibrary;
 import uk.co.real_logic.artio.library.LibraryConfiguration;
-import uk.co.real_logic.artio.session.SessionCustomisationStrategy;
 
 import java.io.File;
 
@@ -57,9 +54,9 @@ public class DummyUtils
     public static EngineConfiguration getConfiguration(final int port)
     {
         return new EngineConfiguration()
-                .logOutboundMessages(false)
-                .logInboundMessages(false)
-                .libraryAeronChannel(DummyUtils.buildChannelString(port))
-                .scheduler(new LowResourceEngineScheduler());
+            .logOutboundMessages(false)
+            .logInboundMessages(false)
+            .libraryAeronChannel(DummyUtils.buildChannelString(port))
+            .scheduler(new LowResourceEngineScheduler());
     }
 }
