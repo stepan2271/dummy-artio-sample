@@ -75,8 +75,12 @@ public class DummyMaker
 
         while (true)
         {
-            idleStrategy.idle(tryRead() ? 1 : 0);
             idleStrategy.idle(trySendMessage() ? 1 : 0);
+            idleStrategy.idle(tryRead() ? 1 : 0);
+            if (sentMessages % 1000 == 0)
+            {
+                System.out.println(sentMessages + " / " + receivedMessages);
+            }
         }
     }
 
@@ -98,6 +102,7 @@ public class DummyMaker
     }
 
     private int sentMessages = 0;
+    private int receivedMessages = 0;
 
     private boolean trySendMessage()
     {
@@ -121,10 +126,6 @@ public class DummyMaker
         {
             isBlocked = true;
         }
-        if (sentMessages % 1000 == 0)
-        {
-            System.out.println(sentMessages);
-        }
         return true;
     }
 
@@ -147,6 +148,7 @@ public class DummyMaker
         {
             isBlocked = false;
         }
+        receivedMessages++;
     }
 
     @Override
