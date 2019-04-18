@@ -29,27 +29,17 @@ public class NewConnectionsContention
         DummyUtils.cleanupOldLogFileDir(configurationTaker);
         FixEngine.launch(configurationTaker);
         final Thread[] threads = new Thread[NUMBER_OF_TAKERS];
-        final AtomicBoolean shouldStart = new AtomicBoolean(false);
         for (int i = 0; i < NUMBER_OF_TAKERS; i++) {
             final SessionConfiguration sessionConfiguration = getSessionConfiguration(portExternal + i);
             final DummyTaker taker = new DummyTaker(sessionConfiguration);
-            threads[i] = new Thread(() -> NewConnectionsContention.start(taker, shouldStart));
+            threads[i] = new Thread(() -> NewConnectionsContention.start(taker));
             threads[i].start();
         }
-        shouldStart.set(true);
         new ShutdownSignalBarrier().await();
     }
 
-    private static void start(final DummyTaker taker, final AtomicBoolean shouldStart)
+    private static void start(final DummyTaker taker)
     {
-        while (!shouldStart.get())
-        {
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
         while (!taker.start())
         {
             try {
