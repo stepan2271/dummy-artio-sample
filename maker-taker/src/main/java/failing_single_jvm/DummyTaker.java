@@ -4,12 +4,11 @@ import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.SleepingIdleStrategy;
 import uk.co.real_logic.artio.Reply;
 import uk.co.real_logic.artio.decoder.*;
-import uk.co.real_logic.artio.library.FixLibrary;
-import uk.co.real_logic.artio.library.LibraryConfiguration;
-import uk.co.real_logic.artio.library.SessionAcquireHandler;
-import uk.co.real_logic.artio.library.SessionConfiguration;
+import uk.co.real_logic.artio.library.*;
 import uk.co.real_logic.artio.session.Session;
+import uk.co.real_logic.artio.session.SessionIdStrategy;
 
+import java.time.LocalDateTime;
 import java.util.function.BooleanSupplier;
 
 import static java.util.Collections.singletonList;
@@ -18,6 +17,7 @@ public class DummyTaker implements DictionaryAcceptor
 {
     private BooleanSupplier startLambda;
     private FixLibrary library;
+    private final DynamicLibraryScheduler SCHEDULER = new DynamicLibraryScheduler();
 
     public DummyTaker(final SessionConfiguration sessionConfig)
     {
@@ -29,6 +29,8 @@ public class DummyTaker implements DictionaryAcceptor
                 DummyUtils.blockingConnect(
                     new LibraryConfiguration()
                     .sessionAcquireHandler(sessionAcquireHandler)
+                    .sessionIdStrategy(SessionIdStrategy.senderAndTarget())
+                    .scheduler(SCHEDULER)
                     .libraryAeronChannels(singletonList(DummyUtils.buildChannelString(11111))));
             final IdleStrategy idleStrategy = new SleepingIdleStrategy(1);
             final Reply<Session> reply = library.initiate(sessionConfig);
@@ -38,7 +40,7 @@ public class DummyTaker implements DictionaryAcceptor
             }
             if (!reply.hasCompleted())
             {
-                System.out.println("unable to initiate the session");
+                System.out.println(LocalDateTime.now() + " " + library.libraryId() + " unable to initiate the session");
                 library.close();
                 return false;
             }

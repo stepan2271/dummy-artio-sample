@@ -21,12 +21,7 @@ public class SamplePingPong
         DummyUtils.cleanupOldLogFileDir(configurationTaker);
         FixEngine.launch(configurationTaker);
         FixEngine.launch(configurationMaker);
-        final SessionConfiguration sessionConfiguration = SessionConfiguration.builder()
-            .address("localhost", portExternal)
-            .targetCompId("MAKER")
-            .senderCompId("TAKER")
-            .resetSeqNum(DummyUtils.NTPRO_RESET_SEQ_NUM)
-            .build();
+        final SessionConfiguration sessionConfiguration = getSessionConfiguration(portExternal);
         final DummyTaker taker = new DummyTaker(
             sessionConfiguration
         );
@@ -45,5 +40,14 @@ public class SamplePingPong
             maker.session.send(exampleMessageEncoder);
             Thread.sleep(100);
         }
+    }
+
+    public static SessionConfiguration getSessionConfiguration(int portExternal) {
+        return SessionConfiguration.builder()
+                .address("localhost", portExternal)
+                .targetCompId("MAKER" + portExternal)
+                .senderCompId("TAKER" + portExternal)
+                .resetSeqNum(DummyUtils.NTPRO_RESET_SEQ_NUM)
+                .build();
     }
 }

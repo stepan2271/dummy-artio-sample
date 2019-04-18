@@ -4,12 +4,17 @@ import io.aeron.driver.MediaDriver;
 import org.agrona.IoUtil;
 import uk.co.real_logic.artio.builder.LogonEncoder;
 import uk.co.real_logic.artio.builder.LogoutEncoder;
+import uk.co.real_logic.artio.engine.DefaultEngineScheduler;
 import uk.co.real_logic.artio.engine.EngineConfiguration;
 import uk.co.real_logic.artio.library.FixLibrary;
 import uk.co.real_logic.artio.library.LibraryConfiguration;
 import uk.co.real_logic.artio.session.SessionCustomisationStrategy;
+import uk.co.real_logic.artio.session.SessionIdStrategy;
+import uk.co.real_logic.artio.validation.SessionPersistenceStrategy;
 
 import java.io.File;
+import java.time.Instant;
+import java.time.LocalDateTime;
 
 import static io.aeron.driver.ThreadingMode.SHARED;
 
@@ -17,26 +22,20 @@ public class DummyUtils
 {
     public static final boolean NTPRO_RESET_SEQ_NUM = true;
     static final int COUNTER_MASK = ((pow2(20)) - 1);
-    public static final SessionCustomisationStrategy NORMAL_LOGON_STRATEGY = new SessionCustomisationStrategy()
-    {
-        @Override
-        public void configureLogon(final LogonEncoder logonEncoder, final long l)
-        {
-            logonEncoder.resetResetSeqNumFlag();
-        }
-
-        @Override
-        public void configureLogout(final LogoutEncoder logoutEncoder, final long l)
-        {
-        }
-    };
 
     public static FixLibrary blockingConnect(final LibraryConfiguration configuration)
     {
         final FixLibrary library = FixLibrary.connect(configuration);
+        final long start = Instant.now().toEpochMilli();
+        System.out.println(LocalDateTime.now() + " " + library.libraryId() + " start connecting to engine");
         while (!library.isConnected())
         {
             library.poll(1);
+            if (Instant.now().toEpochMilli() - start > 60_000)
+            {
+                throw new RuntimeException(
+                    LocalDateTime.now() + " " + library.libraryId() + " failed to connect after 1 minute");
+            }
             Thread.yield();
         }
         return library;
@@ -68,6 +67,10 @@ public class DummyUtils
 
     public static EngineConfiguration getConfiguration(final int port)
     {
-        return new EngineConfiguration().libraryAeronChannel(DummyUtils.buildChannelString(port));
+        return (EngineConfiguration) new EngineConfiguration()
+                .scheduler(new DefaultEngineScheduler())
+                .sessionPersistenceStrategy(SessionPersistenceStrategy.alwaysIndexed())
+                .libraryAeronChannel(DummyUtils.buildChannelString(port))
+                .sessionIdStrategy(SessionIdStrategy.senderAndTarget());
     }
 }
