@@ -17,9 +17,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static failing_single_jvm.SamplePingPong.getSessionConfiguration;
 import static io.aeron.driver.ThreadingMode.SHARED;
 
-public class NewConnectionsContention {
-
-    private static final String BASE_LOG_DIR = System.getProperty("baseLogDir", "/var/log/skynet");
+public class NewConnectionsContention
+{
     private static final int NUMBER_OF_TAKERS = 20;
 
     public static void main(final String[] args) {
@@ -54,7 +53,7 @@ public class NewConnectionsContention {
         while (!taker.start())
         {
             try {
-                Thread.sleep(ThreadLocalRandom.current().nextInt(20, 200));
+                Thread.sleep(ThreadLocalRandom.current().nextInt(20, 80));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -72,8 +71,6 @@ public class NewConnectionsContention {
 
     public static Archive.Context createArchiveContext()
     {
-        return new Archive.Context()
-                .threadingMode(ArchiveThreadingMode.SHARED)
-                .archiveDirectoryName(BASE_LOG_DIR + "/aeron-archive");
+        return new Archive.Context().threadingMode(ArchiveThreadingMode.SHARED);
     }
 }
